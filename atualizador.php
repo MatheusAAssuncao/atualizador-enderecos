@@ -35,7 +35,7 @@ foreach ($response['coordenadas'] as $coordenada) {
 }
 
 if (!empty($postData)) {
-    $response = curl(getenv('ENDPOINT_POST_ADDRESSES'), $postData);
+    $response = curl(getenv('ENDPOINT_POST_ADDRESSES'), ['enderecos' => $postData]);
     if (empty(json_decode($response, true))) {
         file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro no endpoint ENDPOINT_POST_ADDRESSES: ' . $response . PHP_EOL, FILE_APPEND);
         exit;
