@@ -5,7 +5,7 @@ include __DIR__ . '/GMaps.php';
 $qtd = 100;
 $response = curl(getenv('ENDPOINT_GET_COORDINATES'), ['qtd' => $qtd]);
 if (empty(json_decode($response, true))) {
-    file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro no endpoint ENDPOINT_GET_COORDINATES: ' . $response . PHP_EOL, FILE_APPEND);
+    file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro no endpoint ENDPOINT_GET_COORDINATES: ' . $response . PHP_EOL, FILE_APPEND);
     exit;
 }
 
@@ -37,17 +37,17 @@ foreach ($response['coordenadas'] as $coordenada) {
 if (!empty($postData)) {
     $response = curl(getenv('ENDPOINT_POST_ADDRESSES'), ['enderecos' => $postData]);
     if (empty(json_decode($response, true))) {
-        file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro no endpoint ENDPOINT_POST_ADDRESSES: ' . $response . PHP_EOL, FILE_APPEND);
+        file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro no endpoint ENDPOINT_POST_ADDRESSES: ' . $response . PHP_EOL, FILE_APPEND);
         exit;
     }
 
     $response = json_decode($response, true);
     if (!empty($response['message'])) {
-        file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] ' . $response['message'] . PHP_EOL, FILE_APPEND);
+        file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] ' . $response['message'] . PHP_EOL, FILE_APPEND);
     }
 }
 
-file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Fim da execução. Tempo: ' . (microtime(true)-$_SERVER["REQUEST_TIME_FLOAT"]) . PHP_EOL, FILE_APPEND);
+file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Fim da execução. Tempo: ' . (microtime(true)-$_SERVER["REQUEST_TIME_FLOAT"]) . PHP_EOL, FILE_APPEND);
 
 function curl($endpoint, $postData) {
     try {
@@ -65,13 +65,13 @@ function curl($endpoint, $postData) {
         $response = curl_exec($ch);
 
         if (curl_errno($ch)) {
-            file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro: ' . curl_error($ch) . PHP_EOL, FILE_APPEND);
+            file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro: ' . curl_error($ch) . PHP_EOL, FILE_APPEND);
         }
 
         curl_close($ch);
 
         return $response;
     } catch (Exception $e) {
-        file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro: ' . $e->getMessage() . ' ' . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
+        file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro: ' . $e->getMessage() . ' ' . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
     }
 }
