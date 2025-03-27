@@ -5,3 +5,5 @@ file_put_contents('~/logs/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') 
 define('USER_AUTH', 'admin');
 define('PASS_AUTH', '123456');
 define('API_URL', 'https://api.com.br');
+define('GET_COORDINATES', '/get-coordinates');
+define('SET_ADDRESS', '/set-address');
