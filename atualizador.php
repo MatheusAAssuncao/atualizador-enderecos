@@ -1,5 +1,7 @@
 <?php
 
+// get values from .env file
+
 file_put_contents('/home1/farfal07/logs/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . ']  Executado' . PHP_EOL, FILE_APPEND);
 
 define('USER_AUTH', 'admin');
