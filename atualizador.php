@@ -2,7 +2,7 @@
 include __DIR__ . '/get_values_from_dot_env.php';
 include __DIR__ . '/GMaps.php';
 
-$qtd = 5;
+$qtd = 100;
 $response = curl(getenv('ENDPOINT_GET_COORDINATES'), ['qtd' => $qtd]);
 if (empty(json_decode($response, true))) {
     file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro no endpoint ENDPOINT_GET_COORDINATES: ' . $response . PHP_EOL, FILE_APPEND);
@@ -40,8 +40,6 @@ if (!empty($postData)) {
         file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro no endpoint ENDPOINT_POST_ADDRESSES: ' . $response . PHP_EOL, FILE_APPEND);
         exit;
     }
-
-    file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Response: ' . $response . PHP_EOL, FILE_APPEND);
 
     $response = json_decode($response, true);
     if (!empty($response['message'])) {
