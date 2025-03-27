@@ -1,2 +1,4 @@
 log.txt
 secrets
+error.log
+.env
