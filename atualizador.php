@@ -2,6 +2,12 @@
 include __DIR__ . '/get_values_from_dot_env.php';
 include __DIR__ . '/GMaps.php';
 
+$http_headers = getallheaders();
+if (empty($http_headers['x-cron-token']) || $http_headers['x-cron-token'] !== getenv('SECURE_TOKEN_CRON_JOB')) {
+    echo "Unauthorized";
+    exit;
+}
+
 $qtd = 100;
 $response = curl(getenv('ENDPOINT_GET_COORDINATES'), ['qtd' => $qtd]);
 if (empty(json_decode($response, true))) {
