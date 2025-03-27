@@ -41,6 +41,8 @@ if (!empty($postData)) {
         exit;
     }
 
+    file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Response: ' . $response . PHP_EOL, FILE_APPEND);
+
     $response = json_decode($response, true);
     if (!empty($response['message'])) {
         file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] ' . $response['message'] . PHP_EOL, FILE_APPEND);
