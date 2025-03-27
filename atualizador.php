@@ -2,7 +2,7 @@
 include __DIR__ . '/get_values_from_dot_env.php';
 include __DIR__ . '/GMaps.php';
 
-$qtd = 10;
+$qtd = 5;
 $response = curl(getenv('ENDPOINT_GET_COORDINATES'), ['qtd' => $qtd]);
 if (empty(json_decode($response, true))) {
     file_put_contents(getenv('LOG_PATH') . '/atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . ']  Erro: ' . $response . PHP_EOL, FILE_APPEND);
@@ -21,7 +21,7 @@ foreach ($response['coordenadas'] as $coordenada) {
     $allInOne .= isset($array[0]['long_name']) ? ', ' . $array[0]['long_name'] : '';
     $allInOne .= isset($array[2]['long_name']) ? ' - ' . $array[2]['long_name'] : '';
     $allInOne .= isset($array[3]['long_name']) ? ' - ' . $array[3]['long_name'] : '';
-    $allInOne .= isset($array[4]['long_name']) ? ' - ' . $array[4]['long_name'] : '';
+    $allInOne .= isset($array[4]['short_name']) ? ' - ' . $array[4]['short_name'] : '';
 
     echo $allInOne . PHP_EOL;
 }
