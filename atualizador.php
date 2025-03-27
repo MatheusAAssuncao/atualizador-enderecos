@@ -8,4 +8,4 @@ define('USER_AUTH', 'admin');
 define('PASS_AUTH', '123456');
 define('API_URL', 'https://api.com.br');
 define('ENDPOINT_GET_COORDINATES', '/get-coordinates');
-define('ENDPOINT_SET_ADDRESS', '/set-address');
+define('ENDPOINT_POST_ADDRESS', '/set-address');
