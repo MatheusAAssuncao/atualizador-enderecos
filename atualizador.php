@@ -2,8 +2,7 @@
 include __DIR__ . '/get_values_from_dot_env.php';
 include __DIR__ . '/GMaps.php';
 
-$http_headers = getallheaders();
-if (empty($http_headers['x-cron-token']) || $http_headers['x-cron-token'] !== getenv('SECURE_TOKEN_CRON_JOB')) {
+if (empty($_SERVER['x-cron-token']) || $_SERVER['x-cron-token'] !== getenv('SECURE_TOKEN_CRON_JOB')) {
     echo "Unauthorized";
     exit;
 }
