@@ -7,7 +7,7 @@ if (empty($_SERVER['HTTP_X_CRON_TOKEN']) || $_SERVER['HTTP_X_CRON_TOKEN'] !== ge
     exit;
 }
 
-$qtd = 100;
+$qtd = 150;
 $response = curl(getenv('ENDPOINT_GET_COORDINATES'), ['qtd' => $qtd]);
 if (empty(json_decode($response, true))) {
     file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro no endpoint ENDPOINT_GET_COORDINATES: ' . $response . PHP_EOL, FILE_APPEND);
