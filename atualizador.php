@@ -1,58 +1,93 @@
 <?php
 include __DIR__ . '/get_values_from_dot_env.php';
+include __DIR__ . '/Logger.php';
+include __DIR__ . '/GeocoderManager.php';
 include __DIR__ . '/GMaps.php';
+include __DIR__ . '/Opencage.php';
 
-if (empty($_SERVER['HTTP_X_CRON_TOKEN']) || $_SERVER['HTTP_X_CRON_TOKEN'] !== getenv('SECURE_TOKEN_CRON_JOB')) {
-    echo "Unauthorized";
-    exit;
-}
+// if (empty($_SERVER['HTTP_X_CRON_TOKEN']) || $_SERVER['HTTP_X_CRON_TOKEN'] !== getenv('SECURE_TOKEN_CRON_JOB')) {
+//     echo "Unauthorized";
+//     exit;
+// }
 
-$qtd = 150;
-$response = curl(getenv('ENDPOINT_GET_COORDINATES'), ['qtd' => $qtd]);
+// Configuração dos limites
+$qtd_google = (int) getenv('QTD_COORDINATES_GOOGLE');
+$qtd_opencage = (int) getenv('QTD_COORDINATES_OPENCAGE');
+
+$response = curl(getenv('ENDPOINT_GET_COORDINATES'), ['qtd' => $qtd_google + $qtd_opencage]);
 if (empty(json_decode($response, true))) {
-    file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro no endpoint ENDPOINT_GET_COORDINATES: ' . $response . PHP_EOL, FILE_APPEND);
+    logger('Erro no endpoint ENDPOINT_GET_COORDINATES: ' . $response);
     exit;
 }
 
-$gmaps = new GMaps(getenv('GMAPS_KEY'));
+// Configuração do gerenciador de geocodificação
+$geocoderManager = new GeocoderManager();
 
-$response = json_decode($response, true);
-foreach ($response['coordenadas'] as $coordenada) {
-    $endereco = $gmaps->geoLocal($coordenada['lat'], $coordenada['lon']);
-
-    $array = json_decode(json_encode($endereco),true);	
-    
-    $allInOne = $array[1]['long_name'];													 	
-    $allInOne .= isset($array[0]['long_name']) ? ', ' . $array[0]['long_name'] : '';
-    $allInOne .= isset($array[2]['long_name']) ? ' - ' . $array[2]['long_name'] : '';
-    $allInOne .= isset($array[3]['long_name']) ? ' - ' . $array[3]['long_name'] : '';
-    $allInOne .= isset($array[4]['short_name']) ? ' - ' . $array[4]['short_name'] : '';
-
-    if (empty($allInOne)) {
-        continue;
+try {
+    // Adiciona Google Maps como primeiro provedor se configurado
+    if (!empty(getenv('GMAPS_KEY'))) {
+        $gmaps = new GMaps(getenv('GMAPS_KEY'));
+        $geocoderManager->addProvider($gmaps, $qtd_google);
     }
 
-    $postData[] = array(
-        'descricao' => $allInOne,
-        'lat' => $coordenada['lat'],
-        'lon' => $coordenada['lon']
-    );
+    // Adiciona OpenCage como segundo provedor se configurado
+    if (!empty(getenv('OPENCAGE_KEY'))) {
+        $opencage = new Opencage(getenv('OPENCAGE_KEY'));
+        $geocoderManager->addProvider($opencage, $qtd_opencage);
+    }
+} catch (Exception $e) {
+    logger('Erro ao configurar provedores de geocodificação: ' . $e->getMessage());
+    exit;
 }
 
+$postData = [];
+$response = json_decode($response, true);
+$i = 0;
+foreach ($response['coordenadas'] as $coordenada) {
+    try {
+        $i++;
+        $endereco = $geocoderManager->geoLocal($coordenada['lat'], $coordenada['lon']);
+        
+        if ($i > 20) {
+            // Se já processou mais de 20 coordenadas, pode parar
+            break;
+        }
+        
+        if (empty($endereco)) {
+            continue;
+        }
+
+        $postData[] = array(
+            'descricao' => $endereco,
+            'lat' => $coordenada['lat'],
+            'lon' => $coordenada['lon']
+        );
+    } catch (Exception $e) {
+        logger('Erro ao processar coordenada [' . $coordenada['lat'] . ', ' . $coordenada['lon'] . ']: ' . $e->getMessage());
+        continue;
+    }
+}
+print_r([$postData]);
+exit;
 if (!empty($postData)) {
     $response = curl(getenv('ENDPOINT_POST_ADDRESSES'), ['enderecos' => $postData]);
     if (empty(json_decode($response, true))) {
-        file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Erro no endpoint ENDPOINT_POST_ADDRESSES: ' . $response . PHP_EOL, FILE_APPEND);
+        logger('Erro no endpoint ENDPOINT_POST_ADDRESSES: ' . $response);
         exit;
     }
 
     $response = json_decode($response, true);
     if (!empty($response['message'])) {
-        file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] ' . $response['message'] . PHP_EOL, FILE_APPEND);
+        logger($response['message']);
     }
 }
 
-file_put_contents(getenv('LOG_PATH') . '/' . date('Y-m') . '-atualizador-enderecos.log', '[' . date('Y-m-d H:i:s') . '] Fim da execução. Tempo: ' . (microtime(true)-$_SERVER["REQUEST_TIME_FLOAT"]) . PHP_EOL, FILE_APPEND);
+// Log das estatísticas de uso dos provedores
+$stats = $geocoderManager->getUsageStats();
+$statsMessage = 'Estatísticas de uso dos provedores: ' . json_encode($stats);
+logger($statsMessage);
+
+logger('Fim da execução. Tempo: ' . (microtime(true)-$_SERVER["REQUEST_TIME_FLOAT"]) . 's');
 
 function curl($endpoint, $postData) {
     try {
